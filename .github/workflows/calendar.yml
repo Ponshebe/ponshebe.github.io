@@ -1,0 +1,35 @@
+name: 営業日カレンダー
+
+on:
+  schedule:
+    - cron: '14 4 20 * *'   # 毎月20日 13:14（日本時間）
+  workflow_dispatch:
+    inputs:
+      target:
+        description: '作る月（例 2027-02）。空なら翌月'
+        required: false
+      force:
+        description: 'すでにあっても作り直して送る（true / false）'
+        required: false
+        default: 'false'
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: sudo apt-get update && sudo apt-get install -y fonts-noto-cjk fonts-noto-cjk-extra
+      - run: pip install pillow holidays requests
+      - run: python make_month.py
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          TARGET: ${{ github.event.inputs.target }}
+          FORCE: ${{ github.event.inputs.force }}
+      - run: |
+          git config user.name "ponshebe-calendar"
+          git config user.email "actions@users.noreply.github.com"
+          git add できた画像
+          git diff --cached --quiet || (git commit -m "営業日カレンダーを作成" && git push)
