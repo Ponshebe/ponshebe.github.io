@@ -27,7 +27,7 @@
   <footer>大阪・心斎橋　酒肆ポンシェビ</footer>
 </main>
 <script>
-// 日本時間で「今月」と「来月」を出す。画像が無い月（来月分は毎月20日にでき上がる）は出さない。
+// 日本時間で「今月」「来月」「再来月」を出す。画像が無い月（再来月分は毎月20日にでき上がる）は出さない。
 (async () => {
   const p = new Intl.DateTimeFormat('ja-JP', {timeZone:'Asia/Tokyo', year:'numeric', month:'numeric'}).formatToParts(new Date());
   let y = +p.find(x=>x.type==='year').value, m = +p.find(x=>x.type==='month').value;
@@ -41,7 +41,7 @@
     }
   } catch(e) {}
   const box = document.getElementById('months');
-  for (let i = 0; i < 2; i++) {
+  for (let i = 0; i < 3; i++) {
     const yy = y + Math.floor((m - 1 + i) / 12), mm = ((m - 1 + i) % 12) + 1;
     const key = `${yy}-${String(mm).padStart(2,'0')}`;
     const src = encodeURI(`できた画像/${key}_ポンシェビ営業日.png`) + '?v=' + Date.now().toString().slice(0,-5);
