@@ -2,11 +2,11 @@ name: 営業日カレンダー
 
 on:
   schedule:
-    - cron: '14 4 20 * *'   # 毎月20日 13:14（日本時間）
+    - cron: '14 4 20 * *'   # 毎月20日 13:14（日本時間）翌々月分を作る
   workflow_dispatch:
     inputs:
       target:
-        description: '作る月（例 2027-02）。空なら翌月'
+        description: '作る月（例 2027-02）。空なら翌々月'
         required: false
       force:
         description: 'すでにあっても作り直して送る（true / false）'
