@@ -1,0 +1,50 @@
+name: 投稿の声かけ
+
+# オーナーが忘れないよう、Discord に声をかける（PC・AI 不要）。2026-11-23 M
+on:
+  schedule:
+    - cron: '7 3 * * 5'    # 金曜 12:07（日本時間）新入荷・催しの知らせ
+    - cron: '7 1 * * 6'    # 土曜 10:07 確認の日（水曜の投稿の4日前）
+    - cron: '7 2 * * 3'    # 水曜 11:07 投稿の日
+    - cron: '7 3 19 * *'   # 19日 12:07 臨時の休みの締め切り
+    - cron: '37 4 20 * *'  # 20日 13:37 カレンダーの告知の準備
+  workflow_dispatch:
+    inputs:
+      which:
+        description: '試しに送る声かけ（fri / sat / wed / d19 / d20）'
+        required: true
+        default: 'sat'
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Discord に送る
+        env:
+          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
+          SCHEDULE: ${{ github.event.schedule }}
+          WHICH: ${{ github.event.inputs.which }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request
+          m = {"7 3 * * 5": "fri", "7 1 * * 6": "sat", "7 2 * * 3": "wed",
+               "7 3 19 * *": "d19", "37 4 20 * *": "d20"}
+          k = os.environ.get("WHICH") or m.get(os.environ.get("SCHEDULE", ""), "")
+          text = {
+              "fri": "【投稿の準備・金曜】来週水曜の投稿に入れたい新入荷の日本酒・催しがあれば、今日中にMのチャットへひと言。無ければ何もしなくて大丈夫です。",
+              "sat": "【確認の日・土曜】Mのチャットに「今週の投稿」と送ってください。Mが Google・Instagram・HP の文を出します。文と写真を確かめたら、水曜12時で予約投稿を入れてください。",
+              "wed": "【投稿の日・水曜】12時の投稿は予約済みですか？ Google が予約できなかったときは、Mの文を貼って出してください（1分）。",
+              "d19": "【締め切り・19日】再来月の臨時の休み・振替営業があれば、今日中にMのチャットへ。明日20日に再来月のカレンダーを自動で作ります。",
+              "d20": "【カレンダー・20日】再来月のカレンダーを作りました（届いていなければMへ）。この後の最初の土曜の確認で、翌月・翌々月のカレンダーを告知する文をMが出します。Instagramは1枚目に翌月、2枚目に翌々月の画像です。",
+          }.get(k)
+          if not text:
+              print("該当なし:", os.environ.get("SCHEDULE"))
+              raise SystemExit(0)
+          hook = os.environ.get("DISCORD_WEBHOOK")
+          if not hook:
+              print("DISCORD_WEBHOOK がありません")
+              raise SystemExit(1)
+          req = urllib.request.Request(hook, data=json.dumps({"content": text}).encode(),
+                                       headers={"Content-Type": "application/json", "User-Agent": "ponshebe-reminder"})
+          print("送信:", urllib.request.urlopen(req, timeout=30).status)
+          PY
