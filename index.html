@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>酒肆ポンシェビ 営業日ご案内</title>
+<style>
+  body{margin:0;background:#fff;color:#222;font-family:"Hiragino Sans","Noto Sans JP","Yu Gothic",sans-serif;line-height:1.6}
+  main{max-width:520px;margin:0 auto;padding:24px 20px 48px}
+  h1{font-size:22px;font-weight:700;margin:0 0 28px}
+  .year{font-size:26px;font-weight:700;margin:0 0 8px}
+  .year .g{color:#3a9a1c}
+  .month{margin:18px 0 32px}
+  .month h3{font-size:24px;font-weight:700;margin:0}
+  .note{font-size:14px;margin:4px 0 6px 18px}
+  .word{font-size:16px;font-weight:700;color:#c0392b;margin:6px 0 8px}
+  .month img{width:100%;height:auto;border-radius:8px;display:block}
+  footer{font-size:12px;color:#888;margin-top:24px}
+</style>
+</head>
+<body>
+<main>
+  <h1>酒肆ポンシェビ 営業日ご案内</h1>
+  <p class="year">⭐<span class="g">営業日と時間</span>⭐<span id="y"></span></p>
+  <div id="months"></div>
+  <footer>大阪・心斎橋　酒肆ポンシェビ</footer>
+</main>
+<script>
+// 日本時間で「今月」と「来月」を出す。画像が無い月（来月分は毎月20日にでき上がる）は出さない。
+(async () => {
+  const p = new Intl.DateTimeFormat('ja-JP', {timeZone:'Asia/Tokyo', year:'numeric', month:'numeric'}).formatToParts(new Date());
+  let y = +p.find(x=>x.type==='year').value, m = +p.find(x=>x.type==='month').value;
+  document.getElementById('y').textContent = y;
+  const words = {};
+  try {
+    const t = await (await fetch('ひとこと.md', {cache:'no-store'})).text();
+    for (const line of t.split('\n')) {
+      const r = line.match(/^\|\s*(\d{4})-(\d{2})\s*\|\s*([^|]*?)\s*\|/);
+      if (r && r[3]) (words[`${r[1]}-${r[2]}`] ||= []).push(r[3]);
+    }
+  } catch(e) {}
+  const box = document.getElementById('months');
+  for (let i = 0; i < 2; i++) {
+    const yy = y + Math.floor((m - 1 + i) / 12), mm = ((m - 1 + i) % 12) + 1;
+    const key = `${yy}-${String(mm).padStart(2,'0')}`;
+    const src = encodeURI(`できた画像/${key}_ポンシェビ営業日.png`) + '?v=' + Date.now().toString().slice(0,-5);
+    const ok = await new Promise(res => { const im = new Image(); im.onload=()=>res(true); im.onerror=()=>res(false); im.src = src; });
+    if (!ok) continue;
+    const d = document.createElement('section');
+    d.className = 'month';
+    d.innerHTML = `<h3>▶${mm}月 18:00-23:00</h3><p class="note">（ラストイン22:00 ラストオーダー22:30）</p>` +
+      (words[key] || []).map(w => `<p class="word"></p>`).join('') +
+      `<img alt="${yy}年${mm}月 ポンシェビ営業日" src="${src}">`;
+    (words[key] || []).forEach((w, j) => d.querySelectorAll('.word')[j].textContent = w);
+    box.appendChild(d);
+  }
+})();
+</script>
+</body>
+</html>
