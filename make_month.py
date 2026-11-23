@@ -1,4 +1,5 @@
-"""毎月20日に GitHub Actions から動く：翌月の営業日カレンダーを作り、Discord に送る。
+"""毎月20日に GitHub Actions から動く：翌々月の営業日カレンダーを作り、Discord に送る。
+（2026-11-23 オーナー決定：20日に翌々月分を作り、その後いちばん近い投稿で翌月・翌々月を告知する）
 
 決まり（オーナー確認済み）
 - 毎週日曜は休み
@@ -30,9 +31,9 @@ def target_month():
         y, m = t.split("-")
         return int(y), int(m)
     today = dt.datetime.now(JST).date()
-    y, m = today.year, today.month + 1
-    if m == 13:
-        y, m = y + 1, 1
+    y, m = today.year, today.month + 2
+    if m > 12:
+        y, m = y + 1, m - 12
     return y, m
 
 
@@ -85,6 +86,7 @@ def main():
         return 0
     days = "・".join(f"{d}日" for d in closed)
     msg = (f"【営業日カレンダー】{y}年{m}月分ができました（M・自動）。休み：{days}。"
+           "次の週1回の投稿で、翌月・翌々月のカレンダーを告知します（Instagramは1枚目に翌月、2枚目に翌々月）。"
            "臨時の休みや振替の変更があれば、Mのチャットで伝えてください。直して送り直します。")
     for attempt in range(2):
         with open(out, "rb") as f:
