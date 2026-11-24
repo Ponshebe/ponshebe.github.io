@@ -47,6 +47,14 @@
     const src = encodeURI(`できた画像/${key}_ポンシェビ営業日.png`) + '?v=' + Date.now().toString().slice(0,-5);
     const ok = await new Promise(res => { const im = new Image(); im.onload=()=>res(true); im.onerror=()=>res(false); im.src = src; });
     if (!ok) continue;
+    // 年が変わる月の上に「営業日カレンダー 〇〇〇〇年」を出す（2026-11-24 オーナー指示）
+    if (yy !== y && !box.dataset['y' + yy]) {
+      const h = document.createElement('p');
+      h.className = 'year';
+      h.textContent = `営業日カレンダー ${yy}年`;
+      box.appendChild(h);
+      box.dataset['y' + yy] = '1';
+    }
     const d = document.createElement('section');
     d.className = 'month';
     d.innerHTML = `<h3>▶${mm}月 18:00-23:00</h3><p class="note">（ラストイン22:00 ラストオーダー22:30）</p>` +
